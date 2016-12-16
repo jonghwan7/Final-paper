@@ -1,0 +1,103 @@
+
+library(haven)
+ICOWdyadyr <- read_dta("C:/Users/Jonghwan Han/Desktop/Political science/Classes/2016 Fall/Computational Methods for CP/final paper/ICOWdyad.dta")
+View(ICOWdyadyr)
+
+# Distribution of DVs
+library(ggplot2)
+ggplot(data = ICOWdyadyr, aes(peace_attempts)) + geom_histogram(binwidth=0.5, fill = "blue", col = "blue", alpha=0.3)
+ggplot(data = ICOWdyadyr, aes(claim_onset)) + geom_histogram(binwidth=0.5, fill = "blue", col = "blue", alpha=0.3)
+
+
+install.packages("Zelig")
+install.packages("SparseM")
+install.packages("car")
+install.packages("MASS")
+install.packages("stargazer")
+library(MASS)
+library(Zelig)
+library(SparseM)
+library(car)
+library(stargazer)
+
+# Model 1(Rare event Logit)
+
+m1 <- zelig(data = ICOWdyadyr, claim_onset ~ cap_naval_hegemon +
+                                             alliance + 
+                                             unclos + 
+                                             unclos1 +
+                                             unclos2 +
+                                             relative_capabilities + 
+                                             resource + 
+                                             salience_rest + 
+                                             shared_memberships + 
+                                             joint_democracy + 
+                                             past_MID_experience, model = "relogit", tau = NULL, case.control =                                                      c("prior","weighting"), bias.correct = TRUE)
+
+m2 <- glm.nb(data = ICOWdyadyr, peace_attempts ~ cap_naval_hegemon +
+                                                 alliance + 
+                                                 unclos + 
+                                                 unclos1 +
+                                                 unclos2 +
+                                                 relative_capabilities + 
+                                                 resource + 
+                                                 salience_rest + 
+                                                 shared_memberships + 
+                                                 joint_democracy + 
+
+m3 <- glm.nb(data = ICOWdyadyr, peace_attempts ~ cap_naval_hegemon*alliance +
+                                                 unclos + 
+                                                 unclos1 +
+                                                 unclos2 +
+                                                 relative_capabilities + 
+                                                 resource + 
+                                                 salience_rest + 
+                                                 shared_memberships + 
+                                                 joint_democracy + 
+                                                 past_MID_experience)
+
+
+stargazer(m2, m3, title="The influence of naval hegemon on peaceful settlement attempts over the maritime claims", align=TRUE, dep.var.labels=c("peaceful settlement attempts"), covariate.labels = c("Capability of naval hegemon","Alliance with naval hegemon","UNCLOS", "UNCLOS1", "UNCLOS2", "Relative capabilities","Resource", "Other salience", "Shared memberships","Joint democracy", "Recenty militarized disputes", "interaction"),omit.stat=c("LL","ser","f"), no.space=TRUE)
+
+
+library(dotwhisker)
+
+dwplot(m1) + scale_y_continuous(breaks = 11:1, labels=c("Capability of naval hegemon", "Alliance with naval hegemon",
+                                                       "UNCLOS", "one UNCLOS", "both UNCLOS", "Relative capabilities",
+                                                       "Resource", "Other salience", "Shared memberships",
+                                                       "Joint democracy", "Recenty militarized disputes")) + 
+             labs(x = "Coefficient") + 
+             geom_vline(xintercept = 0, colour = "grey50", linetype = 2)
+             
+
+dwplot(m2) + scale_y_continuous(breaks = 11:1, labels=c("Capability of naval hegemon", "Alliance with naval hegemon",
+                                                       "UNCLOS", "one UNCLOS", "both UNCLOS", "Relative capabilities",
+                                                       "Resource", "Other salience", "Shared memberships",
+                                                       "Joint democracy", "Recenty militarized disputes")) + 
+             labs(x = "Coefficient") + 
+             geom_vline(xintercept = 0, colour = "grey50", linetype = 2)
+             
+
+dwplot(m3) + scale_y_continuous(breaks = 12:1, labels=c("Capability of naval hegemon", "Alliance with naval hegemon",
+                                                       "UNCLOS", "one UNCLOS", "both UNCLOS", "Relative capabilities",
+                                                       "Resource", "Other salience", "Shared memberships",
+                                                       "Joint democracy", "Recenty militarized disputes", 
+                                                       "interaction")) + 
+             labs(x = "Coefficient") + 
+             geom_vline(xintercept = 0, colour = "grey50", linetype = 2)
+             
+dwplot(list(m2, m3)) + 
+     relabel_y_axis(c("Capability of naval hegemon", "Alliance with naval hegemon",
+                                                       "UNCLOS", "one UNCLOS", "both UNCLOS", "Relative capabilities",
+                                                       "Resource", "Other salience", "Shared memberships",
+                                                       "Joint democracy", "Recenty militarized disputes", 
+                                                       "interaction")) +
+     theme_bw() + xlab("Coefficient Estimate") + ylab("") +
+     geom_vline(xintercept = 0, colour = "grey60", linetype = 2) +
+     ggtitle("Peaceful settlement attempts over the maritime claims") +
+     theme(plot.title = element_text(face="bold"),
+           legend.justification=c(0, 0), legend.position=c(0, 0),
+           legend.background = element_rect(colour="grey80"),
+           legend.title = element_blank()) 
+
+
